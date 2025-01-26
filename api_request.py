@@ -6,12 +6,7 @@ url = 'http://localhost:5000/api/'
 hdr = {'Content-Type': 'application/json'}
 
 
-# Dictrionary to sotre miners' state per ip address
-# {'ip': {'token': 'token_str', 'curtail': 'sleep | active', 'profile': 'underclock | overclock | normal'}}
-# miner_states = {}
-
-
-def get_request_data(operation: str, par1: str, par2 = "") -> dict:
+def get_data(operation: str, par1: str, par2 = "") -> dict:
     match operation:
         case 'login' | 'logout':
             return {"miner_ip": par1}
@@ -23,9 +18,9 @@ def get_request_data(operation: str, par1: str, par2 = "") -> dict:
             return {}
 
 
-def send_request(operation: str, par1: str, par2 = "") -> dict:
+def send(operation: str, par1: str, par2 = "") -> dict:
     req_url = url + operation
-    req_data = get_request_data(operation, par1, par2)
+    req_data = get_data(operation, par1, par2)
 
     if not req_data:
         print('you must be giving wrong operation!')
@@ -41,4 +36,5 @@ def send_request(operation: str, par1: str, par2 = "") -> dict:
         return data
     else:
         print('request failed: ' + str(response.status_code))
+        print(f"{par1}'s " + json.loads(response.content)['message'])
         return {}

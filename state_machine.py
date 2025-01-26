@@ -1,17 +1,20 @@
-from utility import send_request
+from api_request import send
 
 
 class state(object):
     """
-    This is a state base class which simulate a state machine and provides some utility methods.
+    This is a state base class which will be inherited by sub-classes to simulate a state machine,
+    and provides some utility methods.
     """
 
-    def __init__(self, ips):
+    def __init__(self, ips: list):
         self.ips = ips
-        print('Current state: ', str(self))
-        # send_request('login', '1.1.1.1')
-        print(ips)
         self.__process_states()
+
+    def clear(self):
+        for ip in self.ips:
+            send('logout', ip)
+        self.ips.clear()
 
     def __repr__(self):
         return self.__str__()
@@ -27,20 +30,25 @@ class state(object):
 
     def __process_states(self) -> None:
         for ip in self.ips:
-            data = send_request('login', ip)
+            data = send('login', ip)
             if not data:
                 exit(1)
             
             match str(self):
                 case 'curtail':
-                    send_request('curtail', data['token'], 'active')
+                    resp = send('curtail', data['token'], 'active')
                 case 'overclock':
-                    send_request('curtail', data['token'], 'sleep')
-                    send_request('profileset', data['token'], 'overclock')
+                    resp = send('curtail', data['token'], 'sleep')
+                    if resp:
+                        print(f"{ip}'s " + resp['message'])
+                    resp = send('profileset', data['token'], 'overclock')
                 case 'underclock':
-                    send_request('profileset', data['token'], 'underclock')
+                    resp = send('profileset', data['token'], 'underclock')
                 case 'normal':
-                    send_request('profileset', data['token'], 'normal')
+                    resp = send('profileset', data['token'], 'normal')
+    
+            if resp:
+                print(f"{ip}'s " + resp['message'])
 
 
 class curtail(state):
