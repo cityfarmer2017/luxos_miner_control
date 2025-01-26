@@ -1,4 +1,4 @@
-from api_request import send
+import api_request
 
 
 class state(object):
@@ -13,7 +13,7 @@ class state(object):
 
     def clear(self):
         for ip in self.ips:
-            send('logout', ip)
+            api_request.send('logout', ip)
         self.ips.clear()
 
     def __repr__(self):
@@ -30,25 +30,28 @@ class state(object):
 
     def __process_states(self) -> None:
         for ip in self.ips:
-            data = send('login', ip)
+            data = api_request.send('login', ip)
             if not data:
+                print(f'longin failed for {ip}!!!')
                 exit(1)
-            
+
+            print(f"Miner {ip} is operating in {str(self)} mode:")
+
             match str(self):
                 case 'curtail':
-                    resp = send('curtail', data['token'], 'active')
+                    resp = api_request.send('curtail', data['token'], 'active')
                 case 'overclock':
-                    resp = send('curtail', data['token'], 'sleep')
+                    resp = api_request.send('curtail', data['token'], 'sleep')
                     if resp:
-                        print(f"{ip}'s " + resp['message'])
-                    resp = send('profileset', data['token'], 'overclock')
+                        print('\t' + resp['message'])
+                    resp = api_request.send('profileset', data['token'], 'overclock')
                 case 'underclock':
-                    resp = send('profileset', data['token'], 'underclock')
+                    resp = api_request.send('profileset', data['token'], 'underclock')
                 case 'normal':
-                    resp = send('profileset', data['token'], 'normal')
+                    resp = api_request.send('profileset', data['token'], 'normal')
     
             if resp:
-                print(f"{ip}'s " + resp['message'])
+                print('\t' + resp['message'])
 
 
 class curtail(state):
@@ -57,10 +60,7 @@ class curtail(state):
     """
 
     def on_event(self, event):
-        if event == 'overclock':
-            return overclock(self.ips)
-        
-        return self
+        return overclock(self.ips) if event == 'overclock' else self
 
 
 class overclock(state):
@@ -69,10 +69,7 @@ class overclock(state):
     """
 
     def on_event(self, event):
-        if event == 'normal':
-            return normal(self.ips)
-        
-        return self
+        return normal(self.ips) if event == 'normal' else self
 
 
 class underclock(state):
@@ -81,10 +78,7 @@ class underclock(state):
     """
 
     def on_event(self, event):
-        if event == 'curtail':
-            return curtail(self.ips)
-        
-        return self
+        return curtail(self.ips) if event == 'curtail' else self
 
 
 class normal(state):
@@ -93,7 +87,4 @@ class normal(state):
     """
 
     def on_event(self, event):
-        if event == 'underclock':
-            return underclock(self.ips)
-        
-        return self
+        return underclock(self.ips) if event == 'underclock' else self

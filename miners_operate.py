@@ -13,12 +13,12 @@ states = ['overclock', 'normal', 'underclock', 'curtail']
 
 class miners_operator:
     """
-    this class is for simulating operations on miners.
+    this class is for simulating state transition looping on miners.
     """
 
     def __init__(self, ips: list):
-        self.stage = int(str(datetime.now(timezone.utc))[11:13]) // 6
-        match states[self.stage]:
+        self.slot = self.__time_slot()
+        match states[self.slot]:
             case 'curtail':
                 self.state = curtail(ips)
             case 'overclock':
@@ -29,15 +29,18 @@ class miners_operator:
                 self.state = normal(ips)
 
     def __del__(self):
-        # print("__del__ called!")
         self.state.clear()
+
+    @staticmethod
+    def __time_slot() -> int:
+        return int(str(datetime.now(timezone.utc))[11:13]) // 6
 
     def state_loop(self) -> None:
         while True:
-            curr_stage = int(str(datetime.now(timezone.utc))[11:13]) // 6
-            # curr_stage = (self.stage + 1) % 4
-            if self.stage != curr_stage:
-                match states[self.stage]:
+            curr_slot = self.__time_slot()
+            # curr_slot = (self.slot + 1) % 4
+            if self.slot != curr_slot:
+                match states[self.slot]:
                     case 'curtail':
                         self.state = self.state.on_event('overclock')
                     case 'overclock':
@@ -46,7 +49,7 @@ class miners_operator:
                         self.state = self.state.on_event('curtail')
                     case 'normal':
                         self.state = self.state.on_event('underclock')
-                self.stage = curr_stage
+                self.slot = curr_slot
             else:
                 print("Current state: ", self.state.__repr__())
 
@@ -62,5 +65,4 @@ if __name__ == '__main__':
         time.sleep(INTERVAL)
         operator.state_loop()
     except KeyboardInterrupt:
-        # print("Ctrl-C pressed!")
         del operator
