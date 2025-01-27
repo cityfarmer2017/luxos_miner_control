@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from argparse import ArgumentParser
 from state_machine import curtail, overclock, underclock, normal
 import time
 import re
@@ -35,10 +36,9 @@ class miners_operator:
     def __time_slot() -> int:
         return int(str(datetime.now(timezone.utc))[11:13]) // 6
 
-    def state_loop(self) -> None:
+    def state_loop(self, dbg_mode: bool) -> None:
         while True:
-            curr_slot = self.__time_slot()
-            # curr_slot = (self.slot + 1) % 4
+            curr_slot = (self.slot + 1) % 4 if dbg_mode else self.__time_slot()
             if self.slot != curr_slot:
                 match states[self.slot]:
                     case 'curtail':
@@ -56,13 +56,21 @@ class miners_operator:
             time.sleep(INTERVAL)
 
 
-if __name__ == '__main__':
+def main() -> None:
+    parser = ArgumentParser()
+    parser.add_argument('--debug', action='store_true', help='---debug mode---')
+    args = parser.parse_args()
+    
     ips = [s for s in input('Enter ip addresses of miners: ').split()]
     ips[:] = [ip for ip in ips if re.match(ip_pattern, ip)]
 
     try:
         operator = miners_operator(ips)
         time.sleep(INTERVAL)
-        operator.state_loop()
+        operator.state_loop(args.debug)
     except KeyboardInterrupt:
         del operator
+
+
+if __name__ == '__main__':
+    main()
