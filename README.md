@@ -13,9 +13,13 @@ Please follow the steps listed below to run / test the code:
 
     **pip install flask requests**
 
-3. Start the api.py (refer to the README of that project for more information).
+3. Start the ***app.py*** (refer to the README of that project for more information).
 
-4. Run ***miners_operate.py***, which is the entry of the application.
+    **cd luxos_server**
+
+    **python3 app.py**
+
+4. Run ***miners_operate.py*** in a different shell, which is the entry of the application.
 
     - Run in normal mode, in which the miner state will transition every 6 hours.
 
@@ -25,6 +29,7 @@ Please follow the steps listed below to run / test the code:
 
         **python3 miners_operate.py --debug**
 
+5. The code is now running as a state machine of a endless loop, you need to press ***ctrl-c*** to stop it.
 
 Some extra information:
 
